@@ -44,14 +44,22 @@ class ViewController: UIViewController {
     var feltTemp: FeltTemp = .none
     var windDirection: WindDirection = .V
     var weatherCondition: WeatherCondition = .none
+    var airportCode: AirportCode? {
+        didSet {
+            guard let airportDict = airportDictionary else { return }
+            guard let value = airportDict.value(forKey: (airportCode?.rawValue)!) else { return }
+            
+            airportStatus = value as! AirportStatus
+        }
+    }
     
     // Airport Status Dictionary
-    var airportDictionary: NSDictionary? {
+        var airportDictionary: NSDictionary? {
         didSet {
             if let airportDict = airportDictionary {
                 let sortedKeys = (airportDict.allKeys as! [String]).sorted(by: <)
                 if let code = sortedKeys.first {
-                    
+                   airportCode = AirportCode(rawValue: code)!
                 }
             }
         }
@@ -69,13 +77,13 @@ class ViewController: UIViewController {
         }
     }
     
+    
     // MARK: View Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
         setUpView()
         airportDictionary = AirportStatus.getTestDataDictionary()
-        
     }
 }
 
@@ -90,7 +98,18 @@ extension ViewController {
     }
     
     // Airport Code Enum
-
+    enum AirportCode: String {
+        case ATL, DFW, JFK, LAX, ORD
+        mutating func next() {
+            switch self {
+            case .ATL: self = .DFW
+            case .DFW: self = .JFK
+            case .JFK: self = .LAX
+            case .LAX: self = .ORD
+            case .ORD: self = .ATL
+            }
+        }
+    }
     
     // Weather Condition Enum
     enum WeatherCondition: String {
@@ -269,7 +288,7 @@ extension ViewController {
     // Change status for view
     func changeStatusWithAnimation() {
         if statusReceived {
-            
+            airportCode?.next()
             UIView.transition(with: view, duration: 0.5, options: .transitionFlipFromRight, animations: nil, completion: nil)
         }
     }
